@@ -50,16 +50,21 @@ var modeOptions = [
 //var userNum=0;
 class Ace extends Component {
 
-  constructor(props,context){ //Construction of a constructor to Initialize the values
-      super(props,context);  //To get data from parent class
-      this.state={
-              code: "",
-              aceMode: "javascript"
+	constructor(props,context){ //Construction of a constructor to Initialize the values
+			super(props,context);  //To get data from parent class
+			this.state={
+							userNum:0,
+							code: "",
+							aceMode: "javascript"
 
-              //newValue="startcode"
-      }
-      this.onChange = this.onChange.bind(this);
-      }
+							//newValue="startcode"
+			}
+			this.onChange = this.onChange.bind(this);
+			}
+
+
+
+
 
 			modeChange(newMode){
 				var modeRef = fire.database().ref("value");
@@ -77,30 +82,37 @@ class Ace extends Component {
         })
       }
 
-//   userNumber(){
-// 	var myConnectionsRef = database.ref('users/joe/connections');
-// 	var lastOnlineRef = database.ref('users/joe/lastOnline');
-// 	var connectedRef = database.ref('.info/connected');
-// connectedRef.on('value', function(snap) {
-// 		if (snap.val() === true)
-// 			{
-// 	 				var con = myConnectionsRef.push();
-// 					userNum+=1;
-// 			}
-//
-// 		else if(con.onDisconnect())
-// 			{
-// 					con.remove();
-// 					userNum-=1;
-// 			}
-// })
-// return userNum;
-// }
+
 
   componentDidMount(){
-		//console.log(userNum);
-		//userNumber();
-			var _this= this; // did this instead of binding to make thisngs less messy or we can simply add this.bind
+					var _this= this;
+						const userListRef = database.ref("USERS_ONLINE");
+				const myUserRef = userListRef.push();
+				// _this.setState({
+				// 	userNum: userNum+1
+				// })
+
+				// Monitor connection state on browser tab
+				database.ref(".info/connected")
+				.on(
+				"value", function (snap) {
+				if (snap.val()) {
+					// if we lose network then remove this user from the list
+					myUserRef.onDisconnect()
+									 .remove();
+					// set user's online status
+					myUserRef.set(true);
+				}
+				}
+				);
+				userListRef.on("value", function(snap) {
+  console.log("# of online users = " + snap.numChildren());
+	var k=snap.numChildren();
+	_this.setState({
+		userNum:k
+	})
+});
+			 // did this instead of binding to make thisngs less messy or we can simply add this.bind
       database.ref('value').on('value', function(snapshot){ // Snapshot just a name of a variable and emember database.ref().on('',function)
         var msg=snapshot.val();  //.val() is a function which will give us a value of the parameter passed
 
@@ -125,7 +137,7 @@ class Ace extends Component {
     return (
       <div>
       <h2>Coding Environment </h2>
-
+			<h2>USERS ACTIVE: {this.state.userNum}</h2>
       <div>
       <label><h3>Mode:</h3></label>
       <Dropdown
